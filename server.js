@@ -360,8 +360,8 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
             show.episodes.push(newEpisode);
             writeDb(db);
 
-            // Auto-Publish to GitHub (XML updates)
-            await autoPublishRssFeed(db, showId);
+            // Auto-Publish to GitHub via Sequential Queue (prevents 409 SHA Conflict)
+            await queuePublish(showId);
 
             const rssUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${showId}/feed.xml`;
             const responseData = {
@@ -404,9 +404,9 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
         
         writeDb(db);
 
-        // Auto-Publish XML feed to GitHub
+        // Auto-Publish XML feed to GitHub via Sequential Queue (prevents 409 SHA Conflict)
         try {
-            await autoPublishRssFeed(db, showId);
+            await queuePublish(showId);
         } catch (e) {
             console.error("Auto publish error:", e);
         }
@@ -702,6 +702,30 @@ async function syncDatabaseFromGithub() {
     }
 }
 
+// Hàng đợi tuần tự xử lý xuất bản để tránh Conflict SHA khi gọi đồng thời nhiều luồng
+const publishQueues = {};
+
+function queuePublish(showId) {
+    if (!publishQueues[showId]) {
+        publishQueues[showId] = Promise.resolve();
+    }
+    
+    // Thêm tác vụ vào chuỗi Promise tuần tự
+    publishQueues[showId] = publishQueues[showId].then(async () => {
+        try {
+            console.log(`[Queue Publish] Bắt đầu xử lý xuất bản tuần tự cho kênh: ${showId}`);
+            const freshDb = readDb(); // Đọc lại dữ liệu mới nhất chứa đầy đủ các tập đã thêm
+            await autoPublishRssFeed(freshDb, showId);
+            console.log(`[Queue Publish] Hoàn thành xuất bản tuần tự cho kênh: ${showId}`);
+        } catch (err) {
+            console.error(`[Queue Publish Error] Lỗi xuất bản trong hàng đợi của kênh ${showId}:`, err.message);
+            throw err;
+        }
+    });
+    
+    return publishQueues[showId];
+}
+
 // Centralized Helper to build RSS XML and push both XML and database to GitHub Pages
 async function autoPublishRssFeed(db, showId) {
     const show = db.shows[showId];
@@ -785,27 +809,23 @@ app.post('/api/shows/:showId/publish', async (req, res) => {
     const ghConfig = db.githubConfig;
 
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     if (!ghConfig.username || !ghConfig.repo || !ghConfig.token) {
-        return res.status(400).json({ error: "Chưa cấu hình thông tin GitHub kết nối trên Server!" });
+        return sendError(res, "Chưa cấu hình thông tin GitHub kết nối trên Server!", 400);
     }
 
     try {
-        // Trigger helper
-        await autoPublishRssFeed(db, showId);
+        // Trigger helper via Sequential Queue (prevents 409 Conflict)
+        await queuePublish(showId);
 
         const rssUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${showId}/feed.xml`;
-        res.json({
-            success: true,
-            rssUrl: rssUrl,
-            message: `Xuất bản kênh ${show.title} thành công lên GitHub Pages!`
-        });
+        sendSuccess(res, { rssUrl: rssUrl }, `Xuất bản kênh ${show.title} thành công lên GitHub Pages!`);
 
     } catch (err) {
         console.error("Publish RSS Error:", err);
-        res.status(500).json({ error: "Lỗi đồng bộ lên GitHub: " + err.message });
+        sendError(res, "Lỗi đồng bộ lên GitHub: " + err.message, 500);
     }
 });
 
