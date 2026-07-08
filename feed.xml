@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" 
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" 
+     xmlns:content="http://purl.org/rss/1.0/modules/content/" 
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <atom:link href="https://thanglv05.github.io/my-podcast/feed.xml" rel="self" type="application/rss+xml" />
+    <title>Cà Phê Công Nghệ</title>
+    <description>Kênh chia sẻ kiến thức công nghệ, lập trình và cuộc sống số hàng tuần. Được xây dựng tự động bằng PodRSS Studio.</description>
+    <link>https://thanglv05.github.io/my-podcast</link>
+    <language>vi</language>
+    <copyright>Copyright © 2026 PodRSS Team</copyright>
+    
+    <itunes:author>PodRSS Team</itunes:author>
+    <itunes:type>episodic</itunes:type>
+    <itunes:summary>Kênh chia sẻ kiến thức công nghệ, lập trình và cuộc sống số hàng tuần. Được xây dựng tự động bằng PodRSS Studio.</itunes:summary>
+    <itunes:explicit>no</itunes:explicit>
+    
+    <itunes:owner>
+      <itunes:name>PodRSS Admin</itunes:name>
+      <itunes:email>backlinkpodcast@likepion.com</itunes:email>
+    </itunes:owner>
+    
+    <itunes:image href="https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&amp;w=1400&amp;h=1400&amp;fit=crop" />
+    
+    <itunes:category text="Technology" />
+
+    <item>
+      <title>Tập 01: Tại sao bạn nên tự chủ RSS Feed cho Podcast?</title>
+      <description>Trong tập đầu tiên này, chúng ta sẽ thảo luận về tầm quan trọng của việc sở hữu RSS Feed riêng, các giới hạn của nền tảng bên thứ ba và cách tối ưu hóa chi phí lưu trữ tệp âm thanh thông qua Cloudflare R2.</description>
+      <content:encoded><![CDATA[Trong tập đầu tiên này, chúng ta sẽ thảo luận về tầm quan trọng của việc sở hữu RSS Feed riêng, các giới hạn của nền tảng bên thứ ba và cách tối ưu hóa chi phí lưu trữ tệp âm thanh thông qua Cloudflare R2.]]></content:encoded>
+      <pubDate>Wed, 08 Jul 2026 08:00:00 +0700</pubDate>
+      <enclosure url="https://example.com/audio/tap-01.mp3" length="45123984" type="audio/mpeg" />
+      <guid isPermaLink="false">9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d</guid>
+      <itunes:duration>00:45:12</itunes:duration>
+      <itunes:explicit>no</itunes:explicit>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:summary>Trong tập đầu tiên này, chúng ta sẽ thảo luận về tầm quan trọng của việc sở hữu RSS Feed riêng, các giới hạn của nền tảng bên thứ ba và cách tối ưu hóa chi phí lưu trữ tệp âm thanh thông qua Cloudflare R2.</itunes:summary>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Podcast RSS Feed Generator - Tự chủ RSS chuẩn quốc tế</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+    <div class="app-container">
+        <!-- Sidebar: Podcast Information Metadata & GitHub Config & OTP Mailbox -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-podcast animated-logo"></i>
+                    <span>PodRSS Studio</span>
+                </div>
+                <p class="tagline">Trình sinh RSS Podcast chuẩn Apple & Spotify</p>
+            </div>
+
+            <!-- BỘ CHỌN KÊNH PODCAST ĐA KÊNH -->
+            <div class="channel-selector-container">
+                <label for="active-channel-select">KÊNH PODCAST HIỆN TẠI</label>
+                <div class="channel-select-row">
+                    <select id="active-channel-select">
+                        <!-- Danh sách kênh được load động từ API -->
+                    </select>
+                    <button type="button" id="btn-create-channel" class="btn-icon-square" title="Tạo kênh Podcast mới">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button type="button" id="btn-delete-channel" class="btn-icon-square delete" title="Xóa kênh Podcast đang chọn">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Buttons to switch between Forms -->
+            <div class="sidebar-tabs">
+                <button type="button" class="tab-btn active" onclick="switchTab('podcast-meta')">
+                    <i class="fa-solid fa-sliders"></i> Podcast Show
+                </button>
+                <button type="button" class="tab-btn" onclick="switchTab('github-config')">
+                    <i class="fa-brands fa-github"></i> GitHub Auto
+                </button>
+                <button type="button" class="tab-btn" onclick="switchTab('mailbox-otp')">
+                    <i class="fa-solid fa-envelope-open-text"></i> Hộp Thư OTP
+                </button>
+            </div>
+
+            <!-- Content Tab 1: Podcast Meta Form (Chỉnh sửa kênh hiện tại) -->
+            <form id="podcast-meta-form" class="sidebar-form tab-content active">
+                <div class="form-group">
+                    <label for="show-id-display">Mã Kênh (Show ID - Duy nhất)</label>
+                    <input type="text" id="show-id-display" readonly style="opacity: 0.6; cursor: not-allowed; background-color: var(--bg-main);">
+                </div>
+
+                <div class="form-group">
+                    <label for="show-title">Tên Podcast (Title) <span class="required">*</span></label>
+                    <input type="text" id="show-title" placeholder="Ví dụ: Đêm Khuya Kể Chuyện" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="show-author">Tên Tác Giả (Author) <span class="required">*</span></label>
+                    <input type="text" id="show-author" placeholder="Ví dụ: Nguyễn Văn A" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="show-owner-name">Người Sở Hữu (Owner) <span class="required">*</span></label>
+                        <input type="text" id="show-owner-name" placeholder="Tên liên hệ" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="show-owner-email">Email Sở Hữu <span class="required">*</span></label>
+                        <input type="email" id="show-owner-email" placeholder="admin@example.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="show-image">Link Ảnh Bìa (Cover Image) <span class="required">*</span></label>
+                    <div class="image-input-wrapper">
+                        <input type="url" id="show-image" placeholder="HTTPS URL (1400x1400 đến 3000x3000px)" required>
+                        <div id="cover-preview" class="cover-preview">
+                            <i class="fa-regular fa-image"></i>
+                        </div>
+                    </div>
+                    <small class="help-text">Phải là HTTPS URL. Đề xuất: JPEG/PNG kích thước vuông.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="show-link">Link Trang Chủ (Website URL)</label>
+                    <input type="url" id="show-link" placeholder="https://my-podcast.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="show-description">Mô Tả Podcast <span class="required">*</span></label>
+                    <textarea id="show-description" rows="4" placeholder="Mô tả tóm tắt nội dung podcast của bạn..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="show-language">Ngôn Ngữ <span class="required">*</span></label>
+                        <select id="show-language" required>
+                            <option value="vi">Tiếng Việt (vi)</option>
+                            <option value="en">English (en)</option>
+                            <option value="ja">日本語 (ja)</option>
+                            <option value="zh">中文 (zh)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="show-explicit">Explicit (18+) <span class="required">*</span></label>
+                        <select id="show-explicit" required>
+                            <option value="no">Không (no)</option>
+                            <option value="yes">Có (yes)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="show-category">Danh Mục Apple Podcast <span class="required">*</span></label>
+                    <select id="show-category" required>
+                        <option value="Arts">Arts (Nghệ thuật)</option>
+                        <option value="Business">Business (Kinh doanh)</option>
+                        <option value="Comedy">Comedy (Hài kịch)</option>
+                        <option value="Education">Education (Giáo dục)</option>
+                        <option value="Fiction">Fiction (Viễn tưởng)</option>
+                        <option value="Government">Government (Chính phủ)</option>
+                        <option value="History">History (Lịch sử)</option>
+                        <option value="Health & Fitness">Health & Fitness (Sức khỏe)</option>
+                        <option value="Kids & Family">Kids & Family (Gia đình & Trẻ em)</option>
+                        <option value="Leisure">Leisure (Giải trí)</option>
+                        <option value="Music">Music (Âm nhạc)</option>
+                        <option value="News">News (Tin tức)</option>
+                        <option value="Religion & Spirituality">Religion & Spirituality (Tôn giáo)</option>
+                        <option value="Science">Science (Khoa học)</option>
+                        <option value="Society & Culture" selected>Society & Culture (Xã hội & Văn hóa)</option>
+                        <option value="Sports">Sports (Thể thao)</option>
+                        <option value="Technology">Technology (Công nghệ)</option>
+                        <option value="True Crime">True Crime (Vụ án có thật)</option>
+                        <option value="TV & Film">TV & Film (Phim ảnh)</option>
+                    </select>
+                </div>
+            </form>
+
+            <!-- Content Tab 2: GitHub Automation Config -->
+            <form id="github-config-form" class="sidebar-form tab-content">
+                <div class="info-alert">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Cấu hình này dùng để tự động upload file nhạc và cập nhật link RSS trực tiếp lên GitHub Pages. Không cần nộp thẻ thanh toán.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="gh-username">GitHub Username <span class="required">*</span></label>
+                    <input type="text" id="gh-username" placeholder="Ví dụ: nguyenvala">
+                </div>
+
+                <div class="form-group">
+                    <label for="gh-repo">Tên Repository <span class="required">*</span></label>
+                    <input type="text" id="gh-repo" placeholder="Ví dụ: my-podcast">
+                    <small class="help-text">Nên là repo đã bật tính năng GitHub Pages.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="gh-token">Personal Access Token <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
+                        <button type="button" id="btn-toggle-token" class="btn-toggle-visibility">
+                            <i class="fa-regular fa-eye-slash"></i>
+                        </button>
+                    </div>
+                    <small class="help-text">Mã thông báo cá nhân (classic hoặc fine-grained) có quyền <b>Repo</b>.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="gh-audio-path">Thư mục chứa nhạc trong repo</label>
+                    <input type="text" id="gh-audio-path" placeholder="audio" value="audio">
+                    <small class="help-text">Đường dẫn tương đối trong repo để lưu tệp âm thanh.</small>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="btn-test-github" class="btn btn-secondary btn-full">
+                        <i class="fa-solid fa-network-wired"></i> Kiểm Tra Kết Nối
+                    </button>
+                </div>
+            </form>
+
+            <!-- Content Tab 3: OTP Mailbox Config & Fetch -->
+            <div id="mailbox-otp-tab" class="sidebar-form tab-content">
+                <div class="info-alert">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                    <span>Tự động quét và đọc mã xác nhận OTP (Spotify, Apple...) được gửi về email domain của bạn.</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="mb-email">Email Hòm Thư Theo Dõi</label>
+                    <input type="email" id="mb-email" value="backlinkpodcast@likepion.com" readonly>
+                    <small class="help-text">Email này đồng bộ từ trường Email Sở Hữu bên Podcast Show.</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mb-from">Lọc Người Gửi (From)</label>
+                        <input type="text" id="mb-from" placeholder="Ví dụ: apple, spotify">
+                    </div>
+                    <div class="form-group">
+                        <label for="mb-subject">Lọc Tiêu Đề (Subject)</label>
+                        <input type="text" id="mb-subject" placeholder="Ví dụ: code, verification">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="btn-fetch-emails" class="btn btn-primary btn-full">
+                        <i class="fa-solid fa-rotate"></i> Đọc Thư Mới Nhất
+                    </button>
+                </div>
+
+                <!-- Email List Display Area -->
+                <div class="mailbox-list-wrapper">
+                    <div class="section-title" style="margin-top: 10px;">
+                        <i class="fa-regular fa-folder-open"></i> Thư đã nhận
+                    </div>
+                    <div id="mailbox-list" class="mailbox-list">
+                        <div class="mail-empty-state">
+                            <i class="fa-regular fa-envelope"></i>
+                            <p>Hộp thư trống hoặc chưa quét.</p>
+                            <p class="sub-text">Bấm nút "Đọc Thư Mới Nhất" ở trên để kiểm tra thư.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-info">
+                    <h1>Trình Quản Lý & Xuất Bản Podcast</h1>
+                    <p>Tạo dữ liệu, kiểm tra định dạng và sinh RSS Feed tự động</p>
+                </div>
+                <div class="header-actions">
+                    <button type="button" id="btn-import-json" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-import"></i> Nhập JSON
+                    </button>
+                    <button type="button" id="btn-export-json" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-export"></i> Xuất JSON
+                    </button>
+                    <button type="button" id="btn-export-xml" class="btn btn-secondary">
+                        <i class="fa-solid fa-file-code"></i> Sinh XML Feed
+                    </button>
+                    <button type="button" id="btn-publish-github" class="btn btn-primary" title="Tự động đồng bộ file xml và cấu hình lên Github">
+                        <i class="fa-brands fa-github"></i> Xuất Bản Lên GitHub
+                    </button>
+                </div>
+            </header>
+
+            <div class="main-layout">
+                <!-- Left Panel: Episode List -->
+                <section class="episodes-section">
+                    <div class="section-header">
+                        <h2>Danh Sách Các Tập (<span id="episode-count">0</span>)</h2>
+                        <button type="button" id="btn-add-episode" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-plus"></i> Thêm Tập Mới
+                        </button>
+                    </div>
+
+                    <div id="episodes-list" class="episodes-list">
+                        <!-- Dynamic episodes cards go here -->
+                        <div class="empty-state">
+                            <i class="fa-solid fa-microphone-lines"></i>
+                            <p>Chưa có tập podcast nào.</p>
+                            <p class="sub-text">Hãy nhấn nút "Thêm Tập Mới" để tạo tập đầu tiên cho show của bạn.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Panel: RSS XML Preview -->
+                <section class="preview-section">
+                    <div class="section-header">
+                        <h2>Xem Trước RSS XML Feed</h2>
+                        <div class="preview-actions">
+                            <button type="button" id="btn-copy-xml" class="btn btn-secondary btn-sm" disabled>
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                            <button type="button" id="btn-download-xml" class="btn btn-primary btn-sm" disabled>
+                                <i class="fa-solid fa-download"></i> Tải về
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="xml-preview-container">
+                        <pre id="xml-code" class="xml-code">Nhấn nút "Sinh XML Feed" ở thanh công cụ phía trên sau khi bạn đã nhập đầy đủ thông tin Podcast và các Tập.</pre>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Tạo Kênh Podcast Mới -->
+    <div id="channel-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tạo Kênh Podcast Mới</h3>
+                <span class="close-modal" id="btn-close-channel-modal">&times;</span>
+            </div>
+            <form id="channel-form" class="modal-form">
+                <div class="form-group">
+                    <label for="chan-title">Tên Kênh Podcast <span class="required">*</span></label>
+                    <input type="text" id="chan-title" placeholder="Ví dụ: Tâm Sự Kinh Doanh" required>
+                </div>
+                <div class="form-group">
+                    <label for="chan-author">Tên Tác Giả <span class="required">*</span></label>
+                    <input type="text" id="chan-author" placeholder="Ví dụ: Nguyễn Văn B" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="chan-owner-name">Người Sở Hữu <span class="required">*</span></label>
+                        <input type="text" id="chan-owner-name" placeholder="Tên liên hệ" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="chan-owner-email">Email Liên Hệ <span class="required">*</span></label>
+                        <input type="email" id="chan-owner-email" value="backlinkpodcast@likepion.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="chan-image">Link Ảnh Bìa (Cover Image URL) <span class="required">*</span></label>
+                    <input type="url" id="chan-image" placeholder="HTTPS URL (1400x1400 đến 3000x3000px)" required>
+                </div>
+                <div class="form-group">
+                    <label for="chan-description">Mô Tả Kênh Podcast <span class="required">*</span></label>
+                    <textarea id="chan-description" rows="3" placeholder="Giới thiệu nội dung kênh của bạn..." required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="chan-language">Ngôn Ngữ <span class="required">*</span></label>
+                        <select id="chan-language" required>
+                            <option value="vi" selected>Tiếng Việt (vi)</option>
+                            <option value="en">English (en)</option>
+                            <option value="ja">日本語 (ja)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="chan-category">Danh Mục Apple Podcast <span class="required">*</span></label>
+                        <select id="chan-category" required>
+                            <option value="Arts">Arts</option>
+                            <option value="Business" selected>Business</option>
+                            <option value="Education">Education</option>
+                            <option value="News">News</option>
+                            <option value="Society & Culture">Society & Culture</option>
+                            <option value="Technology">Technology</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-channel-modal" class="btn btn-secondary">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Khởi Tạo Kênh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Episode Modal Form -->
+    <div id="episode-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Thêm Tập Podcast Mới</h3>
+                <span class="close-modal" id="btn-close-modal">&times;</span>
+            </div>
+            <form id="episode-form" class="modal-form">
+                <input type="hidden" id="episode-index" value="">
+                
+                <div class="form-group">
+                    <label for="ep-title">Tiêu Đề Tập (Episode Title) <span class="required">*</span></label>
+                    <input type="text" id="ep-title" placeholder="Ví dụ: Tập 1: Đi tìm bản ngã" required>
+                </div>
+
+                <!-- BỘ TAB LỰA CHỌN NGUỒN ÂM THANH -->
+                <div class="form-group">
+                    <label>Nguồn File Âm Thanh (Audio Source) <span class="required">*</span></label>
+                    <div class="modal-tabs">
+                        <button type="button" class="modal-tab-btn active" id="btn-tab-upload">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload GitHub
+                        </button>
+                        <button type="button" class="modal-tab-btn" id="btn-tab-tts">
+                            <i class="fa-solid fa-microphone-lines"></i> Tự Động TTS (Văn Bản)
+                        </button>
+                        <button type="button" class="modal-tab-btn" id="btn-tab-url">
+                            <i class="fa-solid fa-link"></i> Nhập Link Ngoài
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT 1: UPLOAD GITHUB -->
+                <div class="audio-tab-content active" id="tab-content-upload">
+                    <div class="form-group github-upload-box">
+                        <div class="upload-area" id="audio-upload-area">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <p>Kéo & thả file âm thanh (.mp3, .m4a) vào đây hoặc <span>click để chọn file</span></p>
+                            <input type="file" id="ep-audio-file" accept="audio/*" style="display: none;">
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="upload-progress-container" id="upload-progress-container" style="display: none;">
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-fill" id="upload-progress-bar" style="width: 0%;">0%</div>
+                            </div>
+                            <div class="progress-status-row">
+                                <span id="upload-status-text">Đang tải lên...</span>
+                                <button type="button" id="btn-cancel-upload" class="btn-cancel-xs">Hủy</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT 2: TỰ ĐỘNG TTS -->
+                <div class="audio-tab-content" id="tab-content-tts">
+                    <div class="tts-box" style="background-color: rgba(124, 93, 250, 0.05); border: 1px dashed var(--border-color); padding: 16px; border-radius: var(--radius-md);">
+                        <div class="form-group">
+                            <label for="ep-tts-text">Văn bản cần đọc (TTS) <span class="required">*</span></label>
+                            <textarea id="ep-tts-text" rows="5" placeholder="Nhập văn bản tiếng Việt để robot tự động đọc và sinh file mp3..."></textarea>
+                            <small class="help-text">Nội dung này cũng sẽ được tự động chuyển làm phần mô tả của tập podcast.</small>
+                        </div>
+                        <button type="button" id="btn-generate-tts" class="btn btn-primary btn-sm btn-full" style="margin-top: 12px; height: 38px;">
+                            <i class="fa-solid fa-robot"></i> Tạo Giọng Nói & Xuất Bản 1-Click
+                        </button>
+                        
+                        <!-- TTS Processing status -->
+                        <div class="upload-progress-container" id="tts-progress-container" style="display: none; margin-top: 12px;">
+                            <div class="progress-bar-wrapper">
+                                <div class="progress-bar-fill" id="tts-progress-bar" style="width: 100%; background: var(--color-gradient); animation: pulse-audio 1.5s infinite;">Processing...</div>
+                            </div>
+                            <div class="progress-status-row">
+                                <span id="tts-status-text">Đang xử lý TTS & tự động xuất bản...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT 3: NHẬP LINK NGOÀI -->
+                <div class="audio-tab-content" id="tab-content-url">
+                    <div class="form-group">
+                        <div class="audio-input-wrapper">
+                            <input type="url" id="ep-audio" placeholder="HTTPS URL tệp âm thanh">
+                            <button type="button" id="btn-fetch-audio" class="btn btn-secondary btn-sm" title="Quét dung lượng tệp từ URL">
+                                <i class="fa-solid fa-arrows-rotate"></i> Quét file
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row" id="form-row-size-duration">
+                    <div class="form-group">
+                        <label for="ep-length">Dung Lượng Tệp (Byte) <span class="required">*</span></label>
+                        <input type="number" id="ep-length" placeholder="Ví dụ: 15485932">
+                        <small class="help-text">Tự động tính sau khi upload thành công.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="ep-duration">Thời Lượng (Duration) <span class="required">*</span></label>
+                        <input type="text" id="ep-duration" placeholder="HH:MM:SS (ví dụ: 00:45:30)">
+                        <small class="help-text">Ví dụ: 45 phút 30 giây -> 00:45:30.</small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ep-pubdate">Ngày Phát Hành (Publish Date) <span class="required">*</span></label>
+                        <input type="datetime-local" id="ep-pubdate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="ep-type">Loại Tập (Episode Type) <span class="required">*</span></label>
+                        <select id="ep-type" required>
+                            <option value="full" selected>Full (Tập chính thức)</option>
+                            <option value="trailer">Trailer (Giới thiệu)</option>
+                            <option value="bonus">Bonus (Tập tặng kèm)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="ep-explicit">Explicit (18+) <span class="required">*</span></label>
+                        <select id="ep-explicit" required>
+                            <option value="no">Không (no)</option>
+                            <option value="yes">Có (yes)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ep-guid">GUID (Mã ID tập - Tự động sinh)</label>
+                        <input type="text" id="ep-guid" placeholder="Tự sinh nếu để trống">
+                        <small class="help-text">Mã định danh duy nhất của tập podcast.</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ep-description">Mô Tả Tập Podcast <span class="required">*</span></label>
+                    <textarea id="ep-description" rows="4" placeholder="Tóm tắt nội dung chi tiết của tập này..." required></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="btn-cancel-modal" class="btn btn-secondary">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu Tập Tin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden File Input for Importing JSON -->
+    <input type="file" id="file-import-json" accept=".json" style="display: none;">
+
+    <script src="app.js"></script>
+</body>
+</html>
