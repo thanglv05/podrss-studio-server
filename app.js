@@ -1211,7 +1211,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify(show)
                     });
                     if (res.ok) {
-                        const newShow = await res.json();
+                        const resData = await res.json();
+                        const newShow = resData.data;
                         // Import episodes
                         if (show.episodes && show.episodes.length > 0) {
                             for (const ep of show.episodes) {
@@ -1281,7 +1282,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (res.ok) {
-                const data = await res.json();
+                const resData = await res.json();
+                const data = resData.data;
                 showToast("Đồng bộ thành công lên GitHub Pages!", "success");
                 
                 // Show preview XML on screen
@@ -1297,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(`XUẤT BẢN THÀNH CÔNG!\n\nKênh Podcast: ${show.title}\nLink RSS Feed chính thức của bạn:\n${data.rssUrl}\n\n(Lưu ý: Mất khoảng 1-2 phút để GitHub Pages kích hoạt link mới. Hãy copy link này nộp lên Spotify/Apple Podcasts)`);
             } else {
                 const err = await res.json();
-                showToast("Lỗi: " + err.error, "error");
+                showToast("Lỗi: " + (err.message || err.error), "error");
             }
         } catch (e) {
             showToast("Lỗi mạng khi kết nối đến Server để xuất bản!", "error");
