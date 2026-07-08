@@ -163,7 +163,8 @@ async function loadAppData() {
         // 1. Fetch GitHub Config
         const ghRes = await fetch('/api/github-config');
         if (ghRes.ok) {
-            githubConfig = await ghRes.json();
+            const ghData = await ghRes.json();
+            githubConfig = ghData.status === 'success' ? ghData.data : {};
             // Fill inputs
             document.getElementById('gh-username').value = githubConfig.username || '';
             document.getElementById('gh-repo').value = githubConfig.repo || '';
@@ -184,7 +185,8 @@ async function fetchShows(selectShowId = null) {
     try {
         const res = await fetch('/api/shows');
         if (res.ok) {
-            showsList = await res.json();
+            const resData = await res.json();
+            showsList = resData.status === 'success' ? resData.data : [];
             
             const selector = document.getElementById('active-channel-select');
             selector.innerHTML = '';
@@ -835,7 +837,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (res.ok) {
-                const newShow = await res.json();
+                const resData = await res.json();
+                const newShow = resData.data;
                 showToast(`Kênh ${newShow.title} đã được khởi tạo!`);
                 chanModal.style.display = 'none';
                 document.getElementById('channel-form').reset();
@@ -844,7 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await fetchShows(newShow.id);
             } else {
                 const err = await res.json();
-                showToast("Lỗi: " + err.error, "error");
+                showToast("Lỗi: " + (err.message || err.error), "error");
             }
         } catch (err) {
             showToast("Lỗi mạng khi khởi tạo kênh!", "error");
@@ -1032,7 +1035,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (res.ok) {
-                const data = await res.json();
+                const resData = await res.json();
+                const epData = resData.data;
                 showToast("Đã sinh giọng nói và xuất bản lên GitHub thành công!", "success");
                 closeModal();
                 
@@ -1040,10 +1044,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 await fetchShows(activeShowId);
                 
                 // Show final alert link
-                alert(`XUẤT BẢN TTS THÀNH CÔNG!\n\nTập podcast mới đã được tạo và đẩy lên GitHub.\nLink âm thanh: ${data.audioUrl}\nLink RSS Feed cập nhật:\n${data.rssUrl}\n\n(Lưu ý: Chờ 1-2 phút để GitHub Pages cập nhật file)`);
+                alert(`XUẤT BẢN TTS THÀNH CÔNG!\n\nTập podcast mới đã được tạo và đẩy lên GitHub.\nLink âm thanh: ${epData.audioUrl}\nLink RSS Feed cập nhật:\n${epData.rssUrl}\n\n(Lưu ý: Chờ 1-2 phút để GitHub Pages cập nhật file)`);
             } else {
                 const err = await res.json();
-                showToast("Lỗi: " + err.error, "error");
+                showToast("Lỗi: " + (err.message || err.error), "error");
                 ttsBtn.disabled = false;
                 progressContainer.style.display = 'none';
             }
@@ -1105,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 closeModal();
             } else {
                 const err = await res.json();
-                showToast("Lỗi: " + err.error, "error");
+                showToast("Lỗi: " + (err.message || err.error), "error");
             }
         } catch (err) {
             showToast("Lỗi mạng khi lưu tập podcast!", "error");

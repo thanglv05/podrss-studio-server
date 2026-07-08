@@ -80,6 +80,26 @@ Bạn có thể sử dụng bất kỳ ngôn ngữ lập trình nào (Python, Ja
     }
     ```
     *(Nếu sử dụng Luồng 2 (TTS), bạn không cần gửi `audioUrl`, `fileSize` hay `duration` vì server sẽ tự sinh. `pubDate` nếu bỏ trống sẽ tự lấy thời gian hiện tại)*.
+*   **Phản hồi thành công (JSON)**:
+    ```json
+    {
+      "status": "success",
+      "message": "Tạo giọng nói, thêm tập mới và cập nhật RSS lên GitHub thành công!",
+      "data": {
+        "guid": "ep_3a7b8c9d",
+        "title": "Tập 02: Vượt qua khủng hoảng tuổi 20",
+        "audioUrl": "https://thanglv05.github.io/my-podcast/audio/tts_1719875412.mp3",
+        "fileSize": "15485962",
+        "mimeType": "audio/mpeg",
+        "duration": "00:15:30",
+        "pubDate": "2026-07-08T10:00",
+        "explicit": "no",
+        "type": "full",
+        "description": "Nội dung chia sẻ về cách vượt qua những khó khăn của tuổi trẻ...",
+        "rssUrl": "https://thanglv05.github.io/my-podcast/show_8f2d9c7a/feed.xml"
+      }
+    }
+    ```
 *   **Tham số**: `:showId` là mã ID ngẫu nhiên của kênh (ví dụ: `show_8f2d9c7a`).
 
 ---
@@ -90,9 +110,11 @@ Bạn có thể sử dụng bất kỳ ngôn ngữ lập trình nào (Python, Ja
 *   **Phản hồi thành công (JSON)**:
     ```json
     {
-      "success": true,
-      "rssUrl": "https://thanglv05.github.io/my-podcast/show_8f2d9c7a/feed.xml",
-      "message": "Xuất bản kênh Cà Phê Công Nghệ thành công lên GitHub Pages!"
+      "status": "success",
+      "message": "Xuất bản kênh thành công lên GitHub Pages!",
+      "data": {
+        "rssUrl": "https://thanglv05.github.io/my-podcast/show_8f2d9c7a/feed.xml"
+      }
     }
     ```
 

@@ -129,6 +129,22 @@ function callGithubAPI(ghConfig, apiPath, method, body = null) {
     });
 }
 
+// Helper to send standard responses
+function sendSuccess(res, data = null, message = "Thao tác thành công", statusCode = 200) {
+    return res.status(statusCode).json({
+        status: "success",
+        message: message,
+        data: data
+    });
+}
+
+function sendError(res, message = "Thao tác thất bại", statusCode = 400) {
+    return res.status(statusCode).json({
+        status: "error",
+        message: message
+    });
+}
+
 // ==========================================
 // HTTP API ENDPOINTS
 // ==========================================
@@ -136,7 +152,7 @@ function callGithubAPI(ghConfig, apiPath, method, body = null) {
 // 1. Get GitHub Configuration
 app.get('/api/github-config', (req, res) => {
     const db = readDb();
-    res.json(db.githubConfig || {});
+    sendSuccess(res, db.githubConfig || {}, "Lấy cấu hình GitHub thành công");
 });
 
 // 2. Save GitHub Configuration
@@ -152,13 +168,13 @@ app.post('/api/github-config', (req, res) => {
     };
     
     writeDb(db);
-    res.json({ success: true, message: "Cấu hình GitHub đã được lưu cục bộ!", config: db.githubConfig });
+    sendSuccess(res, db.githubConfig, "Cấu hình GitHub đã được lưu cục bộ!");
 });
 
 // 3. Get all Podcast Shows (Channels)
 app.get('/api/shows', (req, res) => {
     const db = readDb();
-    res.json(Object.values(db.shows || {}));
+    sendSuccess(res, Object.values(db.shows || {}), "Lấy danh sách kênh thành công");
 });
 
 // 4. Create new Podcast Show (Channel)
@@ -167,7 +183,7 @@ app.post('/api/shows', (req, res) => {
     const { title, author, ownerName, ownerEmail, image, link, description, language, explicit, category } = req.body;
     
     if (!title || !author || !ownerName || !ownerEmail || !image || !description) {
-        return res.status(400).json({ error: "Thiếu thông tin bắt buộc!" });
+        return sendError(res, "Thiếu thông tin bắt buộc!");
     }
 
     const showId = generateRandomId();
@@ -196,7 +212,7 @@ app.post('/api/shows', (req, res) => {
     db.shows[showId] = newShow;
     writeDb(db);
     
-    res.status(201).json(newShow);
+    sendSuccess(res, newShow, "Khởi tạo kênh thành công", 201);
 });
 
 // 5. Update Podcast Show info
@@ -206,7 +222,7 @@ app.put('/api/shows/:showId', (req, res) => {
     const show = db.shows[showId];
 
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     const { title, author, ownerName, ownerEmail, image, link, description, language, explicit, category } = req.body;
@@ -223,7 +239,7 @@ app.put('/api/shows/:showId', (req, res) => {
     if (category) show.category = category;
 
     writeDb(db);
-    res.json(show);
+    sendSuccess(res, show, "Cập nhật kênh thành công");
 });
 
 // 6. Delete Podcast Show (Channel)
@@ -232,13 +248,13 @@ app.delete('/api/shows/:showId', (req, res) => {
     const { showId } = req.params;
 
     if (!db.shows[showId]) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     delete db.shows[showId];
     writeDb(db);
     
-    res.json({ success: true, message: `Đã xóa thành công kênh ${showId}` });
+    sendSuccess(res, null, `Đã xóa thành công kênh ${showId}`);
 });
 
 // 7. Get episodes of a specific Show
@@ -246,9 +262,9 @@ app.get('/api/shows/:showId/episodes', (req, res) => {
     const db = readDb();
     const show = db.shows[req.params.showId];
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
-    res.json(show.episodes || []);
+    sendSuccess(res, show.episodes || [], "Lấy danh sách tập thành công");
 });
 
 // 8. Add episode to a Show (Supports standard upload or Auto-TTS if audioUrl is empty)
@@ -259,7 +275,7 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
     const ghConfig = db.githubConfig;
 
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     const { guid, title, audioUrl, fileSize, duration, pubDate, explicit, type, description } = req.body;
@@ -269,11 +285,11 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
 
     if (isTtsFlow) {
         if (!description || !title) {
-            return res.status(400).json({ error: "Thiếu thông tin tập bắt buộc (title, description) khi dùng tính năng tự động tạo âm thanh TTS!" });
+            return sendError(res, "Thiếu thông tin tập bắt buộc (title, description) khi dùng tính năng tự động tạo âm thanh TTS!");
         }
         
         if (!ghConfig.username || !ghConfig.repo || !ghConfig.token) {
-            return res.status(400).json({ error: "Chưa cấu hình thông tin GitHub kết nối trên Server để tải lên âm thanh TTS!" });
+            return sendError(res, "Chưa cấu hình thông tin GitHub kết nối trên Server để tải lên âm thanh TTS!");
         }
 
         try {
@@ -347,16 +363,22 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
             // Auto-Publish to GitHub (XML updates)
             await autoPublishRssFeed(db, showId);
 
-            res.status(201).json(newEpisode);
+            const rssUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${showId}/feed.xml`;
+            const responseData = {
+                ...newEpisode,
+                rssUrl: rssUrl
+            };
+
+            sendSuccess(res, responseData, "Tạo giọng nói, thêm tập mới và cập nhật RSS lên GitHub thành công!", 201);
 
         } catch (err) {
             console.error("Auto TTS inside Episode API error:", err);
-            res.status(500).json({ error: "Lỗi quy trình tự động TTS: " + err.message });
+            sendError(res, "Lỗi quy trình tự động TTS: " + err.message, 500);
         }
     } else {
         // Standard Flow: Normal audio upload
         if (!title || !fileSize || !duration || !pubDate || !description) {
-            return res.status(400).json({ error: "Thiếu thông tin tập bắt buộc!" });
+            return sendError(res, "Thiếu thông tin tập bắt buộc!");
         }
 
         let mimeType = "audio/mpeg";
@@ -389,7 +411,13 @@ app.post('/api/shows/:showId/episodes', async (req, res) => {
             console.error("Auto publish error:", e);
         }
 
-        res.status(201).json(newEpisode);
+        const rssUrl = `https://${ghConfig.username}.github.io/${ghConfig.repo}/${showId}/feed.xml`;
+        const responseData = {
+            ...newEpisode,
+            rssUrl: rssUrl
+        };
+
+        sendSuccess(res, responseData, "Thêm tập mới và cập nhật RSS lên GitHub thành công!", 201);
     }
 });
 
@@ -400,12 +428,12 @@ app.put('/api/shows/:showId/episodes/:guid', (req, res) => {
     const show = db.shows[showId];
 
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     const epIdx = show.episodes.findIndex(e => e.guid === guid);
     if (epIdx === -1) {
-        return res.status(404).json({ error: "Không tìm thấy tập podcast này!" });
+        return sendError(res, "Không tìm thấy tập podcast này!", 404);
     }
 
     const ep = show.episodes[epIdx];
@@ -428,7 +456,7 @@ app.put('/api/shows/:showId/episodes/:guid', (req, res) => {
     if (description) ep.description = description.trim();
 
     writeDb(db);
-    res.json(ep);
+    sendSuccess(res, ep, "Cập nhật thông tin tập thành công");
 });
 
 // 10. Delete Episode
@@ -438,17 +466,17 @@ app.delete('/api/shows/:showId/episodes/:guid', (req, res) => {
     const show = db.shows[showId];
 
     if (!show) {
-        return res.status(404).json({ error: "Không tìm thấy kênh podcast!" });
+        return sendError(res, "Không tìm thấy kênh podcast!", 404);
     }
 
     const epIdx = show.episodes.findIndex(e => e.guid === guid);
     if (epIdx === -1) {
-        return res.status(404).json({ error: "Không tìm thấy tập podcast này!" });
+        return sendError(res, "Không tìm thấy tập podcast này!", 404);
     }
 
     show.episodes.splice(epIdx, 1);
     writeDb(db);
-    res.json({ success: true, message: `Đã xóa tập ${guid} thành công` });
+    sendSuccess(res, null, `Đã xóa tập ${guid} thành công`);
 });
 
 // Helper to strip HTML tags for plain text descriptions
