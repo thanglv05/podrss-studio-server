@@ -144,13 +144,14 @@ print("Đang gửi yêu cầu sinh TTS & xuất bản...")
 res = requests.post(f"{SERVER_URL}/api/shows/{SHOW_ID}/episodes", json=payload)
 
 if res.status_code == 201 or res.status_code == 200:
-    data = res.json()
+    res_data = res.json()
+    ep_data = res_data.get('data', {})
     print("XUẤT BẢN THÀNH CÔNG!")
-    print(f"-> Link File Nhạc sinh ra: {data['audioUrl']}")
-    print(f"-> Thời lượng: {data['duration']}")
-    print(f"-> Dung lượng: {data['fileSize']} bytes")
+    print(f"-> Link File Nhạc sinh ra: {ep_data.get('audioUrl')}")
+    print(f"-> Thời lượng: {ep_data.get('duration')}")
+    print(f"-> Dung lượng: {ep_data.get('fileSize')} bytes")
 else:
-    print("Lỗi quy trình TTS:", res.json().get('error', res.text))
+    print("Lỗi quy trình TTS:", res.json().get('message', res.text))
 ```
 
 ### Cách 2: Thêm Tập Thủ Công Khi Đã Có Link Nhạc Sẵn
