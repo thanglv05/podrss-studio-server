@@ -623,6 +623,34 @@ async function pushFileToGithubOnServer(ghConfig, gitPath, contentBase64, commit
     return await callGithubAPI(ghConfig, gitPath, 'PUT', body);
 }
 
+// Push file contents with automatic retry in case of 409 Conflict (due to lag or concurrent updates)
+async function pushFileWithRetryOnServer(ghConfig, gitPath, contentBase64, commitMessage, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        let currentSha = null;
+        try {
+            // Fetch newest SHA from GitHub
+            try {
+                const shaResponse = await callGithubAPI(ghConfig, gitPath, 'GET');
+                currentSha = shaResponse.data.sha;
+            } catch (e) {
+                // File does not exist yet on GitHub
+            }
+
+            // Attempt to upload
+            await pushFileToGithubOnServer(ghConfig, gitPath, contentBase64, commitMessage, currentSha);
+            return; // Success, exit function
+        } catch (err) {
+            // If conflict (409) and we still have retry attempts
+            if (err.status === 409 && i < retries - 1) {
+                console.log(`[GitHub Push Retry] 409 Conflict detected for ${gitPath}. Retrying in 1.5s... (Attempt ${i + 2}/${retries})`);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            } else {
+                throw err; // Real error or ran out of retries
+            }
+        }
+    }
+}
+
 // Estimate audio duration based on word count (Vietnamese speed approx 150 words/min)
 function estimateDuration(text) {
     if (!text) return '00:01:00';
@@ -736,28 +764,17 @@ async function autoPublishRssFeed(db, showId) {
 
     const xmlBase64 = Buffer.from(xml, 'utf-8').toString('base64');
     
-    let currentSha = null;
-    try {
-        const shaResponse = await callGithubAPI(ghConfig, gitXmlPath, 'GET');
-        currentSha = shaResponse.data.sha;
-    } catch (e) {}
+    // Push XML to GitHub (with auto retry logic for 409 Conflict)
+    await pushFileWithRetryOnServer(ghConfig, gitXmlPath, xmlBase64, `Publish RSS Feed for show: ${showId}`);
 
-    // Push XML to GitHub
-    await pushFileToGithubOnServer(ghConfig, gitXmlPath, xmlBase64, `Publish RSS Feed for show: ${showId}`, currentSha);
-
-    // Backup database.json to GitHub (without token)
+    // Backup database.json to GitHub (without token, with auto retry logic for 409 Conflict)
     const dbClone = JSON.parse(JSON.stringify(db));
     if (dbClone.githubConfig && dbClone.githubConfig.token) {
         dbClone.githubConfig.token = ''; 
     }
     const dbBase64 = Buffer.from(JSON.stringify(dbClone, null, 2), 'utf-8').toString('base64');
-    let dbSha = null;
-    try {
-        const dbResponse = await callGithubAPI(ghConfig, 'database.json', 'GET');
-        dbSha = dbResponse.data.sha;
-    } catch (e) {}
 
-    await pushFileToGithubOnServer(ghConfig, 'database.json', dbBase64, `Backup Database at publication of: ${showId}`, dbSha);
+    await pushFileWithRetryOnServer(ghConfig, 'database.json', dbBase64, `Backup Database at publication of: ${showId}`);
 }
 
 // 11. PUBLISH RSS FEED XML TO GITHUB (Conventional Manual publish trigger)
