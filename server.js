@@ -20,14 +20,38 @@ app.use(express.static(__dirname));
 // Helper functions for Database read/write
 function readDb() {
     try {
-        if (!fs.existsSync(DB_FILE)) {
-            // Initialize empty database
-            const initData = { githubConfig: { username: '', repo: '', token: '', audioPath: 'audio' }, shows: {} };
-            fs.writeFileSync(DB_FILE, JSON.stringify(initData, null, 2), 'utf8');
-            return initData;
+        let db = { githubConfig: { username: '', repo: '', token: '', audioPath: 'audio' }, shows: {} };
+        if (fs.existsSync(DB_FILE)) {
+            const data = fs.readFileSync(DB_FILE, 'utf8');
+            db = JSON.parse(data);
         }
-        const data = fs.readFileSync(DB_FILE, 'utf8');
-        return JSON.parse(data);
+        
+        // Tự động nạp cấu hình từ Biến Môi Trường Render (nếu có)
+        // Điều này đảm bảo khi rebuild/restart trên Render, cấu hình vẫn được duy trì bền vững và bảo mật
+        let envUpdated = false;
+        if (process.env.GITHUB_USERNAME) {
+            db.githubConfig.username = process.env.GITHUB_USERNAME.trim();
+            envUpdated = true;
+        }
+        if (process.env.GITHUB_REPO) {
+            db.githubConfig.repo = process.env.GITHUB_REPO.trim();
+            envUpdated = true;
+        }
+        if (process.env.GITHUB_TOKEN) {
+            db.githubConfig.token = process.env.GITHUB_TOKEN.trim();
+            envUpdated = true;
+        }
+        if (process.env.GITHUB_AUDIO_PATH) {
+            db.githubConfig.audioPath = process.env.GITHUB_AUDIO_PATH.trim();
+            envUpdated = true;
+        }
+
+        // Nếu có cập nhật từ biến môi trường, ghi đè lại file để đồng nhất dữ liệu cục bộ
+        if (envUpdated) {
+            fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+        }
+
+        return db;
     } catch (e) {
         console.error("Error reading database:", e);
         return { githubConfig: { username: '', repo: '', token: '', audioPath: 'audio' }, shows: {} };
